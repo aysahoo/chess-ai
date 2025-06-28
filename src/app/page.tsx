@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
+import type { Square } from "chess.js";
+// If the above import fails, fallback:
+// type Square = string;
 
 export default function ChessGame() {
   const [game, setGame] = useState(new Chess());
@@ -253,11 +256,11 @@ export default function ChessGame() {
     }
 
     // Otherwise, select the piece and show its legal moves
-    const piece = game.get(square as any);
+    const piece = game.get(square as Square);
     if (game.turn() === "w" && piece && piece.color === "w") {
       setSelectedSquare(square);
-      // Cast square to any to satisfy chess.js typings
-      const moves = game.moves({ square: square as any, verbose: true }) as {
+      // Cast square to Square to satisfy chess.js typings
+      const moves = game.moves({ square: square as Square, verbose: true }) as {
         to: string;
       }[];
       setLegalSquares(moves.map((m) => m.to));
@@ -365,8 +368,8 @@ export default function ChessGame() {
         <Chessboard
           position={position}
           onPieceDrop={onDrop}
-          onSquareClick={onSquareClick as (square: any) => void}
-          customSquareStyles={getCustomSquareStyles() as any}
+          onSquareClick={onSquareClick}
+          customSquareStyles={getCustomSquareStyles()}
           boardOrientation="white"
           customDarkSquareStyle={{ backgroundColor: "#779556" }}
           customLightSquareStyle={{ backgroundColor: "#eeeed2" }}
