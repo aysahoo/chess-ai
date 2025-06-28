@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "Chess AI",
   description: "Play chess against AI powered by GPT-4",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.png",
   },
 };
 
@@ -33,6 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inconsolata.variable} antialiased`}
       >
