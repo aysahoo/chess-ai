@@ -18,7 +18,7 @@ const Instructions: React.FC<InstructionsProps> = ({ isGameOver }) => (
     </p>
     {isGameOver && (
       <p className="text-xs text-gray-400 mt-2 italic">
-        Game over! Click "New Game" to start again.
+        Game over! Click &quot;New Game&quot; to start again.
       </p>
     )}
   </div>

@@ -8,7 +8,6 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, initialModel, onConfirm }) => {
-  const [model, setModel] = useState(initialModel);
   const [userName, setUserName] = useState("");
 
   if (!isOpen) return null;
@@ -57,7 +56,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, initialModel, onConfirm }) => {
           <button
             className="mt-2 bg-black border-white border hover:bg-white hover:text-black text-white py-2 sm:py-3 font-semibold disabled:cursor-not-allowed text-sm sm:text-base"
             disabled={!userName.trim()}
-            onClick={() => onConfirm(model, userName.trim())}
+            onClick={() => onConfirm(initialModel, userName.trim())}
           >
             Start Game
           </button>
