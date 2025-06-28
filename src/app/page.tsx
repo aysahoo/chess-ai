@@ -1,16 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Chessboard } from "react-chessboard";
+import { UserRound, Brain } from "lucide-react";
 import { Chess } from "chess.js";
 import type { Square } from "chess.js";
 // If the above import fails, fallback:
 // type Square = string;
+import ChessboardWrapper from "./components/ChessboardWrapper";
+import Modal from "./components/Modal";
+import OpenAI from "./components/OpenAI";
+import GameStatusMessages, {
+  getGameStatusMessage,
+} from "./components/GameStatusMessages";
 
 export default function ChessGame() {
   const [game, setGame] = useState(new Chess());
   const [position, setPosition] = useState(game.fen());
   const [model, setModel] = useState("openai:gpt-4");
+  const [userName, setUserName] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [gameStatus, setGameStatus] = useState("");
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -18,7 +26,7 @@ export default function ChessGame() {
 
   // Initialize game status on component mount
   useEffect(() => {
-    setGameStatus("Your turn! You play as White.");
+    setGameStatus(""); // Don't show turn messages
   }, []);
 
   async function requestAIMove(gameInstance?: Chess) {
@@ -37,7 +45,7 @@ export default function ChessGame() {
     }
 
     setIsAIThinking(true);
-    setGameStatus("AI is thinking...");
+    setGameStatus(""); // Don't show thinking messages
 
     try {
       const requestData = {
@@ -158,7 +166,7 @@ export default function ChessGame() {
 
       // Log the successful move
       console.log("AI played:", move.san);
-      setGameStatus(`AI played: ${move.san}`);
+      setGameStatus(""); // Don't show move messages
 
       // Check for game over conditions
       setTimeout(() => {
@@ -179,7 +187,7 @@ export default function ChessGame() {
         newGame.move(randomMove);
         setGame(newGame);
         setPosition(newGame.fen());
-        setGameStatus(`AI made random move: ${randomMove.san} (due to error)`);
+        setGameStatus(""); // Don't show move messages
         setTimeout(updateGameStatus, 1000);
       }
     } finally {
@@ -188,29 +196,18 @@ export default function ChessGame() {
   }
 
   function updateGameStatus() {
-    if (game.isCheckmate()) {
-      setGameStatus(
-        game.turn() === "w"
-          ? "Black wins by checkmate!"
-          : "White wins by checkmate!"
-      );
-    } else if (game.isDraw()) {
-      if (game.isStalemate()) {
-        setGameStatus("Game drawn by stalemate!");
-      } else if (game.isInsufficientMaterial()) {
-        setGameStatus("Game drawn by insufficient material!");
-      } else if (game.isThreefoldRepetition()) {
-        setGameStatus("Game drawn by threefold repetition!");
-      } else {
-        setGameStatus("Game drawn!");
-      }
-    } else if (game.isCheck()) {
-      setGameStatus(
-        game.turn() === "w" ? "White is in check!" : "Black is in check!"
-      );
-    } else {
-      setGameStatus("");
-    }
+    const status = getGameStatusMessage(game);
+    setGameStatus(status);
+  }
+
+  function newGame() {
+    const newGameInstance = new Chess();
+    setGame(newGameInstance);
+    setPosition(newGameInstance.fen());
+    setGameStatus(""); // Don't show turn messages
+    setSelectedSquare(null);
+    setLegalSquares([]);
+    setIsAIThinking(false);
   }
 
   function onSquareClick(square: string) {
@@ -234,7 +231,7 @@ export default function ChessGame() {
       }
       setGame(newGame);
       setPosition(newGame.fen());
-      setGameStatus(`You played: ${move.san}`);
+      setGameStatus(""); // Don't show move messages
       setSelectedSquare(null);
       setLegalSquares([]);
 
@@ -242,11 +239,8 @@ export default function ChessGame() {
       if (newGame.isGameOver()) {
         setTimeout(() => {
           const gameInstance = new Chess(newGame.fen());
-          if (gameInstance.isCheckmate()) {
-            setGameStatus("White wins by checkmate!");
-          } else if (gameInstance.isDraw()) {
-            setGameStatus("Game drawn!");
-          }
+          const status = getGameStatusMessage(gameInstance);
+          setGameStatus(status);
         }, 500);
       } else {
         // Let AI respond after player's move - pass the updated game state
@@ -305,7 +299,7 @@ export default function ChessGame() {
 
     setGame(newGame);
     setPosition(newGame.fen());
-    setGameStatus(`You played: ${move.san}`);
+    setGameStatus(""); // Don't show move messages
     setSelectedSquare(null);
     setLegalSquares([]);
 
@@ -313,11 +307,8 @@ export default function ChessGame() {
     if (newGame.isGameOver()) {
       setTimeout(() => {
         const gameInstance = new Chess(newGame.fen());
-        if (gameInstance.isCheckmate()) {
-          setGameStatus("White wins by checkmate!");
-        } else if (gameInstance.isDraw()) {
-          setGameStatus("Game drawn!");
-        }
+        const status = getGameStatusMessage(gameInstance);
+        setGameStatus(status);
       }, 500);
     } else {
       // Let AI respond after player's move - pass the updated game state
@@ -328,75 +319,88 @@ export default function ChessGame() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="mb-4">
-        <select
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          className="p-2 rounded border"
-          disabled={isAIThinking}
-        >
-          <option value="openai:gpt-4">GPT-4</option>
-          {/* <option value="anthropic:claude-4">Claude 4</option> */}
-        </select>
-      </div>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-2 sm:p-4">
+      <GameStatusMessages
+        game={game}
+        gameStatus={gameStatus}
+        setGameStatus={setGameStatus}
+      />
+      <Modal
+        isOpen={isModalOpen}
+        initialModel={model}
+        onConfirm={(selectedModel, enteredName) => {
+          setModel(selectedModel);
+          setUserName(enteredName);
+          setIsModalOpen(false);
+        }}
+      />
 
-      {/* Game Status Display */}
-      <div className="mb-4 h-8 flex items-center">
-        {isAIThinking && (
-          <div className="flex items-center text-blue-600">
-            <div className="animate-spin mr-2 h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-            <span>AI is thinking...</span>
+      {!isModalOpen && (
+        <>
+          {/* Chess board with player info on sides */}
+          <div className="flex flex-col items-center w-full max-w-[95vw] sm:max-w-lg md:max-w-xl lg:max-w-md gap-1">
+            {/* Black player info (top) with thinking status */}
+            <div className="flex items-center justify-between bg-black text-white px-2 sm:px-3 py-2 gap-2 sm:gap-3 w-full border border-white/20">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center">
+                  <OpenAI className="w-4 h-4 sm:w-6 sm:h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm sm:text-lg">
+                    {model === "openai:gpt-4" ? "GPT-4" : model}
+                  </span>
+                </div>
+              </div>
+              {isAIThinking && (
+                <div className="text-xs text-emerald-200 animate-pulse flex items-center gap-1">
+                  <Brain className="w-4 h-4 sm:w-6 sm:h-6" />
+                  <span className="hidden sm:inline">Thinking..</span>
+                  <span className="sm:hidden">Thinking..</span>
+                </div>
+              )}
+            </div>
+
+            {/* Chess board container */}
+            <div className="bg-black p-2 sm:p-4 border border-white/50 w-full">
+              <ChessboardWrapper
+                position={position}
+                onPieceDrop={onDrop}
+                onSquareClick={onSquareClick}
+                customSquareStyles={getCustomSquareStyles()}
+                isAIThinking={isAIThinking}
+              />
+            </div>
+
+            {/* White player info (bottom) */}
+            <div className="flex items-center justify-between bg-black text-white px-2 sm:px-3 py-2 gap-2 sm:gap-3 w-full border border-white/20">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center">
+                  <UserRound className="w-4 h-4 sm:w-6 sm:h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm sm:text-lg">
+                    {userName}
+                  </span>
+                </div>
+              </div>
+              {game.turn() === "w" && !game.isGameOver() && !isAIThinking && (
+                <div className="w-2 h-2 bg-emerald-200 rounded-full animate-pulse"></div>
+              )}
+            </div>
+
+            {/* New Game Button */}
+            <div className="w-full mt-4">
+              <button
+                onClick={newGame}
+                className="w-full bg-transparent border border-white/30 hover:border-white hover:bg-white/10 text-white py-2 sm:py-3 px-4 transition-all duration-200 text-sm sm:text-base font-medium"
+                disabled={isAIThinking}
+              >
+                New Game
+              </button>
+            </div>
           </div>
-        )}
-        {!isAIThinking && gameStatus && (
-          <div
-            className={`text-center font-medium ${
-              gameStatus.includes("wins") || gameStatus.includes("drawn")
-                ? "text-red-600"
-                : gameStatus.includes("check")
-                ? "text-orange-600"
-                : "text-green-600"
-            }`}
-          >
-            {gameStatus}
-          </div>
-        )}
-      </div>
-
-      <div style={{ width: "400px" }}>
-        <Chessboard
-          position={position}
-          onPieceDrop={onDrop}
-          onSquareClick={onSquareClick}
-          customSquareStyles={getCustomSquareStyles()}
-          boardOrientation="white"
-          customDarkSquareStyle={{ backgroundColor: "#779556" }}
-          customLightSquareStyle={{ backgroundColor: "#eeeed2" }}
-          areArrowsAllowed={false}
-        />
-      </div>
-
-      {/* Instructions */}
-      <div className="mt-4 text-center text-gray-600 max-w-md">
-        <p className="text-sm">
-          You play as White. Make your move by dragging pieces. The AI will
-          respond as Black.
-        </p>
-        {game.isGameOver() && (
-          <button
-            onClick={() => {
-              const newGame = new Chess();
-              setGame(newGame);
-              setPosition(newGame.fen());
-              setGameStatus("");
-            }}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            New Game
-          </button>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }
