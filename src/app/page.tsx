@@ -16,7 +16,7 @@ import GameStatusMessages, {
 export default function ChessGame() {
   const [game, setGame] = useState(new Chess());
   const [position, setPosition] = useState(game.fen());
-  const [model, setModel] = useState("openai:gpt-4");
+  const [model, setModel] = useState("openai:gpt-4o-mini");
   const [userName, setUserName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -347,7 +347,7 @@ export default function ChessGame() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-sm sm:text-lg">
-                    {model === "openai:gpt-4" ? "GPT-4" : model}
+                    {model === "openai:gpt-4o-mini" ? "GPT-4o-mini" : model}
                   </span>
                 </div>
               </div>

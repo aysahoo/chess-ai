@@ -20,7 +20,7 @@ const inconsolata = Inconsolata({
 
 export const metadata: Metadata = {
   title: "Chess AI",
-  description: "Play chess against AI powered by GPT-4",
+  description: "Play chess against AI powered by GPT-4o-mini",
   icons: {
     icon: "/favicon.png",
   },

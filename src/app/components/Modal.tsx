@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, initialModel, onConfirm }) => {
             <h1 className="text-white text-xl sm:text-2xl">VS</h1>
             <div className="text-white border border-gray-300 flex items-center justify-center px-3 py-2 sm:py-1 w-full sm:w-40 h-12 sm:h-13 gap-2">
               <OpenAI className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-sm">GPT-4</span>
+              <span className="text-sm">GPT-4o-mini</span>
             </div>
           </div>
           {/* How to Play Instructions */}
