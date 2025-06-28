@@ -21,6 +21,9 @@ const inconsolata = Inconsolata({
 export const metadata: Metadata = {
   title: "Chess AI",
   description: "Play chess against AI powered by GPT-4",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
