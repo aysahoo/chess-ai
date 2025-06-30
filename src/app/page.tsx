@@ -16,13 +16,16 @@ import GameStatusMessages, {
 export default function ChessGame() {
   const [game, setGame] = useState(new Chess());
   const [position, setPosition] = useState(game.fen());
-  const [model, setModel] = useState("openai:gpt-4o-mini");
+  const [model, setModel] = useState("");
   const [userName, setUserName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [gameStatus, setGameStatus] = useState("");
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalSquares, setLegalSquares] = useState<string[]>([]);
+  const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+  const [moveCount, setMoveCount] = useState(0);
 
   // Initialize game status on component mount
   useEffect(() => {
@@ -168,6 +171,11 @@ export default function ChessGame() {
       console.log("AI played:", move.san);
       setGameStatus(""); // Don't show move messages
 
+      // Update move history for AI move
+      const updatedHistory = [...moveHistory, move.san];
+      setMoveHistory(updatedHistory);
+      setMoveCount(updatedHistory.length);
+
       // Check for game over conditions
       setTimeout(() => {
         updateGameStatus();
@@ -208,6 +216,9 @@ export default function ChessGame() {
     setSelectedSquare(null);
     setLegalSquares([]);
     setIsAIThinking(false);
+    setMoveHistory([]);
+    setGameStartTime(null);
+    setMoveCount(0);
   }
 
   function onSquareClick(square: string) {
@@ -246,6 +257,11 @@ export default function ChessGame() {
         // Let AI respond after player's move - pass the updated game state
         setTimeout(() => requestAIMove(newGame), 500);
       }
+
+      // Update move history
+      const updatedHistory = [...moveHistory, move.san];
+      setMoveHistory(updatedHistory);
+      setMoveCount(updatedHistory.length);
       return;
     }
 
@@ -315,11 +331,16 @@ export default function ChessGame() {
       setTimeout(() => requestAIMove(newGame), 500);
     }
 
+    // Update move history
+    const updatedHistory = [...moveHistory, move.san];
+    setMoveHistory(updatedHistory);
+    setMoveCount(updatedHistory.length);
+
     return true;
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-2 sm:p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col items-center justify-center p-2 sm:p-4">
       <GameStatusMessages
         game={game}
         gameStatus={gameStatus}
@@ -332,71 +353,202 @@ export default function ChessGame() {
           setModel(selectedModel);
           setUserName(enteredName);
           setIsModalOpen(false);
+          setGameStartTime(new Date());
         }}
       />
 
       {!isModalOpen && (
         <>
-          {/* Chess board with player info on sides */}
-          <div className="flex flex-col items-center w-full max-w-[95vw] sm:max-w-lg md:max-w-xl lg:max-w-md gap-1">
-            {/* Black player info (top) with thinking status */}
-            <div className="flex items-center justify-between bg-black text-white px-2 sm:px-3 py-2 gap-2 sm:gap-3 w-full border border-white/20">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center">
-                  <OpenAI className="w-4 h-4 sm:w-6 sm:h-6" />
+          {/* Main Game Container */}
+          <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 lg:gap-8 w-full max-w-7xl">
+            {/* Chess Board Section */}
+            <div className="flex flex-col items-center w-full max-w-[95vw] sm:max-w-lg md:max-w-xl lg:max-w-md">
+              {/* Black player info (top) with enhanced status */}
+              <div className="flex items-center justify-between bg-black/80 text-white px-3 sm:px-4 py-3 gap-3 w-full border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center bg-white/10 rounded-full">
+                    <OpenAI className="w-5 h-5 sm:w-7 sm:h-7" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm sm:text-lg">
+                      {(() => {
+                        const modelName = model.replace("openai:", "");
+                        const modelLabels: { [key: string]: string } = {
+                          "gpt-4o-mini": "GPT-4o-mini",
+                          "gpt-4-turbo": "GPT-4 Turbo",
+                          "gpt-4o": "GPT-4o",
+                          "gpt-3.5-turbo": "GPT-3.5 Turbo",
+                        };
+                        return modelLabels[modelName] || modelName;
+                      })()}
+                    </span>
+                    <span className="text-xs text-white/60">
+                      AI Player • Black
+                    </span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm sm:text-lg">
-                    {model === "openai:gpt-4o-mini" ? "GPT-4o-mini" : model}
-                  </span>
-                </div>
-              </div>
-              {isAIThinking && (
-                <div className="text-xs text-emerald-200 animate-pulse flex items-center gap-1">
-                  <Brain className="w-4 h-4 sm:w-6 sm:h-6" />
-                  <span className="hidden sm:inline">Thinking..</span>
-                  <span className="sm:hidden">Thinking..</span>
-                </div>
-              )}
-            </div>
-
-            {/* Chess board container */}
-            <div className="bg-black p-2 sm:p-4 border border-white/50 w-full">
-              <ChessboardWrapper
-                position={position}
-                onPieceDrop={onDrop}
-                onSquareClick={onSquareClick}
-                customSquareStyles={getCustomSquareStyles()}
-                isAIThinking={isAIThinking}
-              />
-            </div>
-
-            {/* White player info (bottom) */}
-            <div className="flex items-center justify-between bg-black text-white px-2 sm:px-3 py-2 gap-2 sm:gap-3 w-full border border-white/20">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <div className="h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center">
-                  <UserRound className="w-4 h-4 sm:w-6 sm:h-6" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-sm sm:text-lg">
-                    {userName}
-                  </span>
+                <div className="flex items-center gap-2">
+                  {isAIThinking && (
+                    <div className="text-xs text-emerald-300 animate-pulse flex items-center gap-2 bg-emerald-500/20 px-2 py-1 rounded">
+                      <Brain className="w-4 h-4" />
+                      <span>Thinking...</span>
+                    </div>
+                  )}
+                  {game.turn() === "b" &&
+                    !game.isGameOver() &&
+                    !isAIThinking && (
+                      <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
+                    )}
                 </div>
               </div>
-              {game.turn() === "w" && !game.isGameOver() && !isAIThinking && (
-                <div className="w-2 h-2 bg-emerald-200 rounded-full animate-pulse"></div>
-              )}
+
+              {/* Enhanced Chess board container */}
+              <div className="bg-black/80 p-3 sm:p-6 border-x border-white/30 w-full shadow-2xl">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-1 rounded-lg shadow-inner">
+                  <ChessboardWrapper
+                    position={position}
+                    onPieceDrop={onDrop}
+                    onSquareClick={onSquareClick}
+                    customSquareStyles={getCustomSquareStyles()}
+                    isAIThinking={isAIThinking}
+                  />
+                </div>
+              </div>
+
+              {/* White player info (bottom) with enhanced status */}
+              <div className="flex items-center justify-between bg-black/80 text-white px-3 sm:px-4 py-3 gap-3 w-full border border-white/20 shadow-lg">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 flex items-center justify-center bg-white/10 rounded-full">
+                    <UserRound className="w-5 h-5 sm:w-7 sm:h-7" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm sm:text-lg">
+                      {userName}
+                    </span>
+                    <span className="text-xs text-white/60">
+                      Human Player • White
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {game.turn() === "w" &&
+                    !game.isGameOver() &&
+                    !isAIThinking && (
+                      <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse shadow-lg shadow-blue-400/50"></div>
+                    )}
+                </div>
+              </div>
+
+              {/* Game Controls */}
+              <div className="w-full mt-6 flex gap-3">
+                <button
+                  onClick={newGame}
+                  className="flex-1 bg-transparent border border-white/30 hover:border-white hover:bg-white/10 text-white py-2 sm:py-3 px-4 transition-all duration-200 text-sm sm:text-base font-medium disabled:opacity-50"
+                  disabled={isAIThinking}
+                >
+                  New Game
+                </button>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-transparent border border-white/30 hover:border-white hover:bg-white/10 text-white py-2 sm:py-3 px-4 transition-all duration-200 text-sm sm:text-base font-medium"
+                  disabled={isAIThinking}
+                >
+                  Settings
+                </button>
+              </div>
             </div>
 
-            {/* New Game Button */}
-            <div className="w-full mt-4">
-              <button
-                onClick={newGame}
-                className="w-full bg-transparent border border-white/30 hover:border-white hover:bg-white/10 text-white py-2 sm:py-3 px-4 transition-all duration-200 text-sm sm:text-base font-medium"
-                disabled={isAIThinking}
-              >
-                New Game
-              </button>
+            {/* Side Panel - Game Info */}
+            <div className="w-full lg:w-80 flex flex-col gap-4">
+              {/* Game Statistics */}
+              <div className="bg-black/80 border border-white/20 p-4 shadow-lg">
+                <h3 className="text-white font-bold text-lg mb-3">
+                  Game Stats
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex flex-col">
+                    <span className="text-white/60">Moves</span>
+                    <span className="text-white font-semibold text-lg">
+                      {moveCount}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white/60">Turn</span>
+                    <span className="text-white font-semibold text-lg">
+                      {game.turn() === "w" ? "White" : "Black"}
+                    </span>
+                  </div>
+                  {gameStartTime && (
+                    <div className="flex flex-col col-span-2">
+                      <span className="text-white/60">Game Time</span>
+                      <span className="text-white font-semibold">
+                        {Math.floor(
+                          (Date.now() - gameStartTime.getTime()) / 60000
+                        )}
+                        m{" "}
+                        {Math.floor(
+                          ((Date.now() - gameStartTime.getTime()) % 60000) /
+                            1000
+                        )}
+                        s
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Move History */}
+              <div className="bg-black/80 border border-white/20 p-4 shadow-lg">
+                <h3 className="text-white font-bold text-lg mb-3">
+                  Move History
+                </h3>
+                <div className="max-h-40 overflow-y-auto text-sm">
+                  {moveHistory.length === 0 ? (
+                    <p className="text-white/60 italic">No moves yet</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {Array.from(
+                        { length: Math.ceil(moveHistory.length / 2) },
+                        (_, i) => {
+                          const whiteMove = moveHistory[i * 2];
+                          const blackMove = moveHistory[i * 2 + 1];
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-center gap-2 text-white/80"
+                            >
+                              <span className="text-white/60 w-6 text-right">
+                                {i + 1}.
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                {whiteMove}
+                              </span>
+                              {blackMove && (
+                                <span className="min-w-0 flex-1">
+                                  {blackMove}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Tips */}
+              <div className="bg-black/80 border border-white/20 p-4 shadow-lg">
+                <h3 className="text-white font-bold text-lg mb-3">
+                  Quick Tips
+                </h3>
+                <div className="text-xs text-white/70 space-y-2">
+                  <p>• Click and drag pieces to move</p>
+                  <p>• Click to select, then click destination</p>
+                  <p>• Legal moves are highlighted</p>
+                  <p>• Use "New Game" to reset</p>
+                </div>
+              </div>
             </div>
           </div>
         </>

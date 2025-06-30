@@ -17,7 +17,10 @@ const ChessboardWrapper: React.FC<ChessboardWrapperProps> = ({
   isAIThinking,
 }) => {
   return (
-    <div className="w-full max-w-[90vw] sm:max-w-[500px] md:max-w-[600px] lg:max-w-[400px] aspect-square">
+    <div
+      className="w-full max-w-[90vw] sm:max-w-[500px] md:max-w-[600px] lg:max-w-[400px] aspect-square"
+      style={{ transform: "translate(0,0)" }}
+    >
       <Chessboard
         position={position}
         onPieceDrop={onPieceDrop}
@@ -27,7 +30,7 @@ const ChessboardWrapper: React.FC<ChessboardWrapperProps> = ({
         customDarkSquareStyle={{ backgroundColor: "#779556" }}
         customLightSquareStyle={{ backgroundColor: "#eeeed2" }}
         areArrowsAllowed={false}
-        arePiecesDraggable={!isAIThinking}
+        arePiecesDraggable={false}
       />
     </div>
   );

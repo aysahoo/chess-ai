@@ -45,7 +45,7 @@ const GameStatusMessages = forwardRef(function GameStatusMessages(
   if (!gameStatus) return null;
   return (
     <div className="fixed top-10 sm:top-16 left-0 right-0 mx-4 sm:mx-0">
-      <div className="bg-black/90 text-white rounded p-2 sm:p-4 text-center text-sm sm:text-base font-normal max-w-md mx-auto">
+      <div className="bg-transparent text-white rounded p-2 sm:p-4 text-center text-sm sm:text-base font-normal max-w-md mx-auto">
         {gameStatus}
       </div>
     </div>
