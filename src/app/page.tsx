@@ -410,7 +410,6 @@ export default function ChessGame() {
                     onPieceDrop={onDrop}
                     onSquareClick={onSquareClick}
                     customSquareStyles={getCustomSquareStyles()}
-                    isAIThinking={isAIThinking}
                   />
                 </div>
               </div>
@@ -546,7 +545,7 @@ export default function ChessGame() {
                   <p>• Click and drag pieces to move</p>
                   <p>• Click to select, then click destination</p>
                   <p>• Legal moves are highlighted</p>
-                  <p>• Use "New Game" to reset</p>
+                  <p>• Use &quot;New Game&quot; to reset</p>
                 </div>
               </div>
             </div>

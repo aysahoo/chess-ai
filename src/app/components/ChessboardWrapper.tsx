@@ -6,7 +6,6 @@ interface ChessboardWrapperProps {
   onPieceDrop: (sourceSquare: string, targetSquare: string) => boolean;
   onSquareClick: (square: string) => void;
   customSquareStyles: { [square: string]: React.CSSProperties };
-  isAIThinking: boolean;
 }
 
 const ChessboardWrapper: React.FC<ChessboardWrapperProps> = ({
@@ -14,7 +13,6 @@ const ChessboardWrapper: React.FC<ChessboardWrapperProps> = ({
   onPieceDrop,
   onSquareClick,
   customSquareStyles,
-  isAIThinking,
 }) => {
   return (
     <div
